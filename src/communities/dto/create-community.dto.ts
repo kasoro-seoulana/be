@@ -37,14 +37,13 @@ export class CreateCommunityDto {
   timeLimit?: number;
 
   @ApiPropertyOptional({
-    description: 'Base fee percentage for the community',
-    example: 5
+    description: 'Base fee amount in SOL',
+    example: 0.1
   })
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Max(100)
-  baseFeePercentage?: number;
+  baseFeeAmount?: number;
 
   @ApiPropertyOptional({
     description: 'Smart contract address for the community',
