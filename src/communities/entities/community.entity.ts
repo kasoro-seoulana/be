@@ -84,7 +84,7 @@ export class Community {
     description: 'Base fee percentage',
     example: 5
   })
-  @Column({ nullable: true })
+  @Column('float', { nullable: true })
   baseFeePercentage: number;
   
   @ApiPropertyOptional({
