@@ -21,6 +21,9 @@ export class Message {
   sender: User;
 
   @Column()
+  imageURL: string;
+
+  @Column()
   communityId: string;
 
   @ManyToOne(() => Community, (community) => community.messages)

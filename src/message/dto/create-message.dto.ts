@@ -17,4 +17,14 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsUUID()
   communityId: string;
+
+
+  @ApiProperty({
+    description: 'Image link',
+    example: 'https://awefaewgaewgawe.com'
+  })
+  @IsNotEmpty()
+  @IsString()
+  imageLink: string;
+
 }
