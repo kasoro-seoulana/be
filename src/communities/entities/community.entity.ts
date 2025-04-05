@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Message } from '../../message/entities/message.entity';
+import { Depositor } from './depositor.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 @Entity('communities')
@@ -37,6 +38,14 @@ export class Community {
   })
   @OneToMany(() => Message, message => message.community)
   messages: Message[];
+
+  @ApiProperty({ 
+    description: 'Depositors who contributed to the community bounty',
+    type: () => [Depositor],
+    required: false
+  })
+  @OneToMany(() => Depositor, depositor => depositor.community)
+  depositors: Depositor[];
 
   @ApiProperty({ 
     description: 'Timestamp of the last message in the community',

@@ -1,11 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { CreateCommunityDto } from './dto/create-community.dto';
 import { Community } from './entities/community.entity';
+import { Depositor } from './entities/depositor.entity';
 import { CommunityRepository } from './community.repository';
+import { DepositorRepository } from './depositor.repository';
+import { CommunityGateway } from './community.gateway';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class CommunityService {
-  constructor(private readonly communityRepository: CommunityRepository) {}
+  constructor(
+    private readonly communityRepository: CommunityRepository,
+    private readonly depositorRepository: DepositorRepository,
+    @Inject(forwardRef(() => CommunityGateway))
+    private readonly communityGateway: CommunityGateway,
+    private readonly userService: UserService
+  ) {}
 
   async getAllCommunities(): Promise<Community[]> {
     return this.communityRepository.find({
@@ -90,9 +100,26 @@ export class CommunityService {
     console.log(`Updated lastMessageTime for community ${id} to ${timestamp}`);
   }
 
-  async updateBounty(id: string, amount: number): Promise<void> {
+  async updateBounty(id: string, amount: number, userId: string, walletAddress: string): Promise<void> {
     // First get the community to check if it exists
     const community = await this.getCommunityById(id);
+    
+    // Get user details for the broadcast
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    
+    // Create a new depositor record
+    const depositor = this.depositorRepository.create({
+      communityId: id,
+      userId,
+      amount,
+      walletAddress
+    });
+    
+    // Save the depositor record
+    await this.depositorRepository.save(depositor);
     
     // Update the bounty amount - add the new deposit to the existing amount
     const newBountyAmount = (community.bountyAmount || 0) + amount;
@@ -100,6 +127,30 @@ export class CommunityService {
     // Update the community with the new bounty amount
     await this.communityRepository.update(id, { bountyAmount: newBountyAmount });
     
-    console.log(`Updated bounty for community ${id} to ${newBountyAmount} SOL`);
+    // Broadcast the deposit update
+    this.communityGateway.broadcastDeposit(id, amount, user.username);
+    
+    console.log(`Updated bounty for community ${id} to ${newBountyAmount} SOL with deposit from user ${userId}`);
+  }
+
+  async getCommunityDepositors(id: string): Promise<Depositor[]> {
+    // First check if the community exists
+    await this.getCommunityById(id);
+    
+    // Then get all depositors for the community
+    return this.depositorRepository.findByCommunity(id);
+  }
+
+  async getCommunityWithDepositors(id: string): Promise<Community> {
+    const community = await this.communityRepository.findOne({
+      where: { id },
+      relations: ['creator', 'depositors', 'depositors.user'],
+    });
+
+    if (!community) {
+      throw new NotFoundException(`Community with ID ${id} not found`);
+    }
+
+    return community;
   }
 }

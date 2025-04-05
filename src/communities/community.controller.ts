@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { CommunityService } from './community.service';
 import { CreateCommunityDto } from './dto/create-community.dto';
 import { Community } from './entities/community.entity';
+import { Depositor } from './entities/depositor.entity';
 import { AuthGuard } from '../auth/auth.guard';
 import { WalletGuard } from '../auth/wallet.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -98,13 +99,47 @@ export class CommunityController {
       throw new Error('Wallet address does not match user wallet');
     }
 
-    // Here you would implement the actual deposit logic with blockchain transactions
-    // For now, we'll just return a success message
-    await this.communityService.updateBounty(id, depositData.amount);
+    // Find user to get their UUID
+    const userEntity = await this.userService.findByXId(user.xId || user.id);
+    if (!userEntity) {
+      throw new Error(`User with ID ${user.id} not found`);
+    }
+
+    // Update bounty and record the deposit
+    await this.communityService.updateBounty(
+      id, 
+      depositData.amount, 
+      userEntity.id, 
+      depositData.walletAddress
+    );
     
     return { 
       success: true, 
       message: `Successfully deposited ${depositData.amount} SOL to community`
     };
+  }
+
+  @ApiOperation({ summary: 'Get all depositors for a community' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'List of all depositors for the community',
+    type: [Depositor]
+  })
+  @ApiResponse({ status: 404, description: 'Community not found' })
+  @Get(':id/depositors')
+  async getCommunityDepositors(@Param('id') id: string): Promise<Depositor[]> {
+    return this.communityService.getCommunityDepositors(id);
+  }
+
+  @ApiOperation({ summary: 'Get community with its depositors' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Community with its depositors',
+    type: Community
+  })
+  @ApiResponse({ status: 404, description: 'Community not found' })
+  @Get(':id/with-depositors')
+  async getCommunityWithDepositors(@Param('id') id: string): Promise<Community> {
+    return this.communityService.getCommunityWithDepositors(id);
   }
 }
