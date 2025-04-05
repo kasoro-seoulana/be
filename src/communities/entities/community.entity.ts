@@ -81,11 +81,11 @@ export class Community {
   timeLimit: number;
 
   @ApiPropertyOptional({
-    description: 'Base fee amount in SOL',
-    example: 0.1
+    description: 'Base fee percentage',
+    example: 5
   })
-  @Column('decimal', { precision: 10, scale: 2, nullable: true, default: 0 })
-  baseFeeAmount: number;
+  @Column({ nullable: true })
+  baseFeePercentage: number;
   
   @ApiPropertyOptional({
     description: 'Wallet address',
@@ -96,13 +96,9 @@ export class Community {
 
   @BeforeInsert()
   @BeforeUpdate()
-  normalizeAmounts() {
+  normalizeBountyAmount() {
     if (this.bountyAmount !== undefined && this.bountyAmount !== null) {
       this.bountyAmount = parseFloat(this.bountyAmount.toString());
-    }
-    
-    if (this.baseFeeAmount !== undefined && this.baseFeeAmount !== null) {
-      this.baseFeeAmount = parseFloat(this.baseFeeAmount.toString());
     }
   }
 }

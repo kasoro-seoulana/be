@@ -34,7 +34,7 @@ export class CommunityService {
         contractAddress: true,
         bountyAmount: true,
         timeLimit: true,
-        baseFeeAmount: true,
+        baseFeePercentage: true,
         walletAddress: true,
         creator: {
           id: true,
