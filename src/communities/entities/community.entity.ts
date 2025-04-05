@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Message } from '../../message/entities/message.entity';
 import { Depositor } from './depositor.entity';
@@ -70,7 +70,7 @@ export class Community {
     description: 'Bounty amount in SOL',
     example: 1.5
   })
-  @Column({ nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true, default: 0 })
   bountyAmount: number;
 
   @ApiPropertyOptional({
@@ -93,4 +93,12 @@ export class Community {
   })
   @Column({ nullable: true })
   walletAddress: string;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  normalizeBountyAmount() {
+    if (this.bountyAmount !== undefined && this.bountyAmount !== null) {
+      this.bountyAmount = parseFloat(this.bountyAmount.toString());
+    }
+  }
 }

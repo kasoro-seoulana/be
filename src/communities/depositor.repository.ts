@@ -9,12 +9,19 @@ export class DepositorRepository extends Repository<Depositor> {
   }
 
   async findByUserAndCommunity(userId: string, communityId: string): Promise<Depositor | null> {
-    return this.findOne({
+    const result = await this.findOne({
       where: { 
         userId,
         communityId 
       }
     });
+    
+    // Ensure amount is a number
+    if (result) {
+      result.amount = parseFloat(result.amount.toString());
+    }
+    
+    return result;
   }
 
   async findByCommunity(communityId: string): Promise<Depositor[]> {

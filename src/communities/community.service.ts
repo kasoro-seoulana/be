@@ -101,26 +101,43 @@ export class CommunityService {
   }
 
   async updateBounty(id: string, amount: number, userId: string, walletAddress: string): Promise<void> {
+    console.log(`[updateBounty] Started: communityId=${id}, amount=${amount}, userId=${userId}, walletAddress=${walletAddress}`);
+    
     // First get the community to check if it exists
+    console.log(`[updateBounty] Fetching community with ID: ${id}`);
     const community = await this.getCommunityById(id);
+    console.log(`[updateBounty] Found community: ${community.name}, current bounty: ${community.bountyAmount}`);
     
     // Get user details for the broadcast
+    console.log(`[updateBounty] Fetching user with ID: ${userId}`);
     const user = await this.userService.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
+    console.log(`[updateBounty] Found user: ${user.username}`);
     
     // Find existing depositor record for this user and community
+    console.log(`[updateBounty] Checking for existing depositor record for user ${userId} in community ${id}`);
     let existingDepositor = await this.depositorRepository.findByUserAndCommunity(userId, id);
     
     if (existingDepositor) {
+      console.log(`[updateBounty] Found existing depositor record: previous amount=${existingDepositor.amount.toFixed(2)}`);
+      
+      // Ensure both values are treated as numbers
+      const currentAmount = parseFloat(existingDepositor.amount.toString());
+      const additionalAmount = parseFloat(amount.toString());
+      const newTotal = currentAmount + additionalAmount;
+      
+      console.log(`[updateBounty] Updating depositor record: ${currentAmount.toFixed(2)} + ${additionalAmount.toFixed(2)} = ${newTotal.toFixed(2)}`);
+      
       // Update the existing record
-      existingDepositor.amount += amount;
+      existingDepositor.amount = newTotal;
       existingDepositor.depositedAt = new Date(); // Update timestamp to current time
       await this.depositorRepository.save(existingDepositor);
       
-      console.log(`Updated existing deposit for user ${userId} in community ${id} to ${existingDepositor.amount} SOL`);
+      console.log(`[updateBounty] Updated existing deposit for user ${userId} in community ${id} to ${newTotal.toFixed(2)} SOL`);
     } else {
+      console.log(`[updateBounty] No existing deposit found, creating new record with amount ${amount}`);
       // Create a new depositor record if one doesn't exist
       const depositor = this.depositorRepository.create({
         communityId: id,
@@ -131,20 +148,27 @@ export class CommunityService {
       
       // Save the depositor record
       await this.depositorRepository.save(depositor);
-      console.log(`Created new deposit for user ${userId} in community ${id} of ${amount} SOL`);
+      console.log(`[updateBounty] Created new deposit for user ${userId} in community ${id} of ${amount} SOL`);
     }
     
     // Update the bounty amount - add the new deposit to the existing amount
-    const newBountyAmount = (community.bountyAmount || 0) + amount;
+    const currentBounty = parseFloat((community.bountyAmount || 0).toString());
+    const amountToAdd = parseFloat(amount.toString());
+    const newBountyAmount = currentBounty + amountToAdd;
     
-    // Update the community with the new bounty amount
-    await this.communityRepository.update(id, { bountyAmount: newBountyAmount });
+    console.log(`[updateBounty] Updating community bounty: ${currentBounty} + ${amountToAdd} = ${newBountyAmount}`);
+    
+    // Instead of using update method which might skip entity hooks, use save method:
+    community.bountyAmount = newBountyAmount;
+    await this.communityRepository.save(community);
+    
+    console.log(`[updateBounty] Community bounty updated successfully to ${community.bountyAmount}`);
     
     // Broadcast the deposit update
     this.communityGateway.broadcastDeposit(id, amount, user.username);
-    
-    console.log(`Updated bounty for community ${id} to ${newBountyAmount} SOL with deposit from user ${userId}`);
+    console.log(`[updateBounty] Broadcast complete`);
   }
+  
 
   async getCommunityDepositors(id: string): Promise<Depositor[]> {
     // First check if the community exists

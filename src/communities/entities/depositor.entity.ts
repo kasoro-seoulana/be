@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Community } from './community.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -38,4 +38,13 @@ export class Depositor {
   @ApiProperty({ description: 'Timestamp of when the deposit was made' })
   @CreateDateColumn()
   depositedAt: Date;
+  
+  // Ensure amount is always treated as a number
+  @BeforeInsert()
+  @BeforeUpdate()
+  normalizeAmount() {
+    if (this.amount) {
+      this.amount = parseFloat(this.amount.toString());
+    }
+  }
 } 
