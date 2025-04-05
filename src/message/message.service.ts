@@ -36,7 +36,7 @@ export class MessageService {
         content: createMessageDto.content,
         senderId: user.id, // Use the user's internal UUID, not Twitter ID
         communityId: createMessageDto.communityId,
-        imageURL: createMessageDto.imageLink,
+        imageURL: createMessageDto.imageLink || null, // Ensure null if imageLink is undefined
         createdAt: currentTime,
       });
       

@@ -20,8 +20,8 @@ export class Message {
   @JoinColumn({ name: 'senderId' })
   sender: User;
 
-  @Column()
-  imageURL: string;
+  @Column({ nullable: true })
+  imageURL: string | null;
 
   @Column()
   communityId: string;

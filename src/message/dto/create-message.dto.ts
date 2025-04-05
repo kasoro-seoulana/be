@@ -21,10 +21,11 @@ export class CreateMessageDto {
 
   @ApiProperty({
     description: 'Image link',
-    example: 'https://awefaewgaewgawe.com'
+    example: 'https://awefaewgaewgawe.com',
+    required: false,
+    nullable: true
   })
-  @IsNotEmpty()
   @IsString()
-  imageLink: string;
+  imageLink?: string | null;
 
 }
