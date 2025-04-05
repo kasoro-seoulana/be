@@ -98,7 +98,7 @@ export class Community {
     description: 'Image URL for the community',
     example: 'https://example.com/image.jpg'
   })
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'imageURL' }) // 컬럼명이 정확한지 확인
   imageURL: string;
 
   @BeforeInsert()
