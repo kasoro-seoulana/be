@@ -51,9 +51,12 @@ export class CommunityService {
   }
 
   async createCommunity(createCommunityDto: CreateCommunityDto, userId: string): Promise<Community> {
+    // Handle the case when no wallet address is provided
     const community = this.communityRepository.create({
       ...createCommunityDto,
       creatorId: userId,
+      // Set bountyAmount to 0 if walletAddress is not provided
+      bountyAmount: createCommunityDto.walletAddress ? createCommunityDto.bountyAmount : 0,
     });
 
     return this.communityRepository.save(community);
@@ -85,5 +88,18 @@ export class CommunityService {
     await this.communityRepository.updateLastMessageTime(id, timestamp);
     
     console.log(`Updated lastMessageTime for community ${id} to ${timestamp}`);
+  }
+
+  async updateBounty(id: string, amount: number): Promise<void> {
+    // First get the community to check if it exists
+    const community = await this.getCommunityById(id);
+    
+    // Update the bounty amount - add the new deposit to the existing amount
+    const newBountyAmount = (community.bountyAmount || 0) + amount;
+    
+    // Update the community with the new bounty amount
+    await this.communityRepository.update(id, { bountyAmount: newBountyAmount });
+    
+    console.log(`Updated bounty for community ${id} to ${newBountyAmount} SOL`);
   }
 }

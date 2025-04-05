@@ -46,7 +46,7 @@ export class CommunityController {
     type: Community
   })
   @Post()
-  @UseGuards(AuthGuard, WalletGuard)
+  @UseGuards(AuthGuard)
   async createCommunity(
     @Body() createCommunityDto: CreateCommunityDto,
     @CurrentUser() user: any,
@@ -76,5 +76,35 @@ export class CommunityController {
   @Get(':id/messages')
   async getCommunityWithMessages(@Param('id') id: string): Promise<Community> {
     return this.communityService.getCommunityWithMessages(id);
+  }
+
+  @ApiOperation({ summary: 'Deposit bounty to a community' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Bounty deposited successfully' 
+  })
+  @ApiResponse({ status: 404, description: 'Community not found' })
+  @Post(':id/deposit')
+  @UseGuards(AuthGuard, WalletGuard) // Keep WalletGuard for deposit since it involves actual wallet operations
+  async depositBounty(
+    @Param('id') id: string,
+    @Body() depositData: { amount: number, walletAddress: string },
+    @CurrentUser() user: any,
+  ): Promise<{ success: boolean, message: string }> {
+    console.log(`Deposit request: ${depositData.amount} SOL to community ${id} from wallet ${depositData.walletAddress}`);
+    
+    // Verify user wallet matches the provided wallet address
+    if (user.walletAddress !== depositData.walletAddress) {
+      throw new Error('Wallet address does not match user wallet');
+    }
+
+    // Here you would implement the actual deposit logic with blockchain transactions
+    // For now, we'll just return a success message
+    await this.communityService.updateBounty(id, depositData.amount);
+    
+    return { 
+      success: true, 
+      message: `Successfully deposited ${depositData.amount} SOL to community`
+    };
   }
 }
