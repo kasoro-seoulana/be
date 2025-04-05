@@ -11,8 +11,29 @@ export class CommunityService {
     return this.communityRepository.find({
       relations: ['creator'],
       order: {
+        lastMessageTime: 'DESC',
         createdAt: 'DESC',
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        creatorId: true,
+        lastMessageTime: true,
+        contractAddress: true,
+        bountyAmount: true,
+        timeLimit: true,
+        baseFeePercentage: true,
+        walletAddress: true,
+        creator: {
+          id: true,
+          xId: true,
+          username: true,
+          displayName: true,
+          profileImageUrl: true,
+        }
+      }
     });
   }
 
