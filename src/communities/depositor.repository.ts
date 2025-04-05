@@ -27,7 +27,7 @@ export class DepositorRepository extends Repository<Depositor> {
   async findByCommunity(communityId: string): Promise<Depositor[]> {
     // Return unique depositors (grouped by user) with their total amounts
     return this.createQueryBuilder('depositor')
-      .select('depositor.id', 'id')
+      .select('MAX(depositor.id)', 'id')
       .addSelect('depositor.userId', 'userId')
       .addSelect('depositor.communityId', 'communityId')
       .addSelect('depositor.walletAddress', 'walletAddress')
@@ -44,7 +44,6 @@ export class DepositorRepository extends Repository<Depositor> {
       .addGroupBy('user.username')
       .addGroupBy('user.displayName')
       .addGroupBy('user.profileImageUrl')
-      .addGroupBy('depositor.id')
       .addGroupBy('depositor.communityId')
       .addGroupBy('depositor.walletAddress')
       .orderBy('MAX(depositor.depositedAt)', 'DESC')
