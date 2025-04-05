@@ -26,6 +26,6 @@ export class CreateMessageDto {
     nullable: true
   })
   @IsString()
-  imageLink?: string | null;
+  imageLink?: string;
 
 }

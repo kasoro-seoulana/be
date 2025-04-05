@@ -32,14 +32,19 @@ export class MessageService {
       const currentTime = new Date();
       
       // Create and save the message using the user's internal UUID
-      const message = this.messageRepository.create({
+      const messageData: Partial<Message> = {
         content: createMessageDto.content,
         senderId: user.id, // Use the user's internal UUID, not Twitter ID
         communityId: createMessageDto.communityId,
-        imageURL: createMessageDto.imageLink || null, // Ensure null if imageLink is undefined
         createdAt: currentTime,
-      });
+      };
       
+      // Only set imageURL if imageLink is provided
+      if (createMessageDto.imageLink) {
+        messageData.imageURL = createMessageDto.imageLink;
+      }
+      
+      const message = this.messageRepository.create(messageData);
       const savedMessage = await this.messageRepository.save(message);
       
       // Update the community's lastMessageTime
