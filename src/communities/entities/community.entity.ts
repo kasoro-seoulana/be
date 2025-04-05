@@ -94,6 +94,13 @@ export class Community {
   @Column({ nullable: true })
   walletAddress: string;
 
+  @ApiPropertyOptional({
+    description: 'Image URL for the community',
+    example: 'https://example.com/image.jpg'
+  })
+  @Column({ nullable: true })
+  imageURL: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   normalizeBountyAmount() {
