@@ -110,16 +110,29 @@ export class CommunityService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
     
-    // Create a new depositor record
-    const depositor = this.depositorRepository.create({
-      communityId: id,
-      userId,
-      amount,
-      walletAddress
-    });
+    // Find existing depositor record for this user and community
+    let existingDepositor = await this.depositorRepository.findByUserAndCommunity(userId, id);
     
-    // Save the depositor record
-    await this.depositorRepository.save(depositor);
+    if (existingDepositor) {
+      // Update the existing record
+      existingDepositor.amount += amount;
+      existingDepositor.depositedAt = new Date(); // Update timestamp to current time
+      await this.depositorRepository.save(existingDepositor);
+      
+      console.log(`Updated existing deposit for user ${userId} in community ${id} to ${existingDepositor.amount} SOL`);
+    } else {
+      // Create a new depositor record if one doesn't exist
+      const depositor = this.depositorRepository.create({
+        communityId: id,
+        userId,
+        amount,
+        walletAddress
+      });
+      
+      // Save the depositor record
+      await this.depositorRepository.save(depositor);
+      console.log(`Created new deposit for user ${userId} in community ${id} of ${amount} SOL`);
+    }
     
     // Update the bounty amount - add the new deposit to the existing amount
     const newBountyAmount = (community.bountyAmount || 0) + amount;
